@@ -1,0 +1,31 @@
+﻿﻿@using ASC.Model.BaseType
+@{
+    Layout = "_SecureLayout";
+}
+
+<div class="row"></div>
+@await Html.PartialAsync("_ServiceRequestGrid", Model.ServiceRequests,
+    new ViewDataDictionary(ViewData)
+    {
+        { "SectionName", "Service Requests" },
+        { "Id", "tblServiceRequests" },
+        { "IsAudit", false }
+    }
+    )
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Initialize DataTable to show List of Service Requests
+            var table = $('#tblServiceRequests').DataTable({
+                'pageLength': 3,
+                // Number of records to be displayed per page
+                'lengthMenu': [[3, 5, 10, -1], [3, 5, 10, 'All']],
+                // Remove default Sorting
+                'sorting': [],
+                'columns': [{ "visible": false }, { "visible": false }, null, { "width":"20%" }, null, null, null]});
+                // Set Styles for DataTable and Number of Records to be displayed dropdown
+                $('#tblServiceRequests').css("width", "100%");
+                $('#select[name="ServiceRequests_length"]').material_select();
+        });
+    </script>
+}

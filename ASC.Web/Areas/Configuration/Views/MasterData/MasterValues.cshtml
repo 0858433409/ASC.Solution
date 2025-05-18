@@ -1,0 +1,206 @@
+﻿@model ASC.Web.Areas.Configuration.Models.MasterValuesViewModel
+@{
+    Layout = "_SecureLayout";
+}
+
+<div class="row" , style="margin-top:30px">
+    <div class="col s12">
+        <div>
+            <div class="card-content">
+                <div class="section blue-grey lighten-1 white-text padding-left-10px">
+                    <h5>Master Values</h5>
+                </div>
+                <div class="divider"></div>
+
+                <div class="col s4">
+                    <select id="ddlMasterKeys" asp-items="@(new SelectList(ViewBag.MasterKeys, "RowKey", "PartitionKey"))">
+                        <option value="">--Select--</option>
+                    </select>
+                    <label>Partition Key</label>
+                </div>
+
+                <div class="col s4 offset-s4 right-align">
+                    <a class="modal-trigger" href="#modal1">
+                        <img src="~/images/excel.jpg" />
+                    </a>
+                </div>
+
+                <div class="col s12">
+                    <table class="highlight centered" id="tblMasterValues">
+                        <thead>
+                            <tr>
+                                <th>Row Key</th>
+                                <th>Partition Key</th>
+                                <th>Name</th>
+                                <th>Is Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <form id="formMasterValue" asp-action="MasterValues" asp-controller="MasterData" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="IsEdit" name="isEdit" value="false" />
+
+            <div class="row">
+                <div class="input-field col s4">
+                    <input type="hidden" asp-for="MasterValueInContext.RowKey" id="Input_MasterKey_RowKey" disabled="disabled" />
+                    <select asp-for="MasterValueInContext.PartitionKey" id="Select_MasterValueInContext_PartitionKey"
+                            asp-items="@(new SelectList(ViewBag.MasterKeys, "RowKey", "PartitionKey"))" required>
+                        <option value="" selected></option>
+                    </select>
+                    <label>Partition Key</label>
+                </div>
+
+                <div class="input-field col s4">
+                    <input asp-for="MasterValueInContext.Name" class="validate" id="MasterValueInContext_Name" />
+                    <label asp-for="MasterValueInContext.Name">Name</label>
+                </div>
+
+                <div class="input-field col s4">
+                    <div class="switch">
+                        <label>
+                            InActive
+                            <input asp-for="MasterValueInContext.IsActive" id="MasterKeyInContext_IsActive" type="checkbox" />
+                            <span class="lever"></span>
+                            Active
+                        </label>
+                    </div>
+                </div>
+
+                <div class="input-field col s12 right-align">
+                    <button class="btn waves-effect waves-light btnSubmit" type="submit">
+                        <i class="material-icons right">send</i>Create
+                    </button>
+                    <button class="btn waves-effect waves-light reset red lighten-1" type="button">
+                        <i class="material-icons right">refresh</i>Reset
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Modal Excel Upload -->
+        <div id="modal1" class="modal">
+            <div class="modal-content">
+                <h4>Upload Excel File</h4>
+                <form asp-action="UploadExcel" asp-controller="MasterData" method="post" enctype="multipart/form-data" id="frmUpload">
+                    <div class="file-field input-field">
+                        <div class="btn">
+                            <span>Choose File</span>
+                            <input type="file" name="excelFile" accept=".xls,.xlsx" required />
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text" placeholder="Upload an Excel file" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn waves-effect waves-light" type="submit">
+                            <i class="material-icons right">file_upload</i>Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @section Scripts {
+            <script>
+                $(document).ready(function () {
+                    $('select').formSelect();
+                    $('.modal').modal();
+
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    $.ajaxSetup({
+                        headers: { 'RequestVerificationToken': token }
+                    });
+
+                    var table = $('#tblMasterValues').DataTable({
+                        ajax: {
+                            url: '@Url.Action("MasterValuesByKey", "MasterData")',
+                            type: 'GET'
+                        },
+                        pageLength: 5,
+                        columns: [
+                            { data: 'RowKey' },
+                            { data: 'PartitionKey' },
+                            { data: 'Name' },
+                            {
+                                data: 'IsActive',
+                                render: function (data) {
+                                    return data ? '<img src="/images/green_tick.jpg" />' : '<img src="/images/red_cross.jpg" />';
+                                }
+                            },
+                            {
+                                data: null,
+                                render: function () {
+                                    return '<i class="small material-icons edit cursor-hand">mode_edit</i>';
+                                }
+                            }
+                        ]
+                    });
+
+                    $('#ddlMasterKeys').change(function () {
+                        var key = $('#ddlMasterKeys option:selected').text();
+                        table.ajax.url('@Url.Action("MasterValuesByKey", "MasterData")?key=' + key).load();
+                    });
+
+                    $('.reset').click(function () {
+                        $('#formMasterValue')[0].reset();
+                        $('#IsEdit').val('false');
+                        $('.btnSubmit').text('Create');
+                        $('select').formSelect();
+                        M.updateTextFields();
+                    });
+
+                    $('#tblMasterValues tbody').on('click', '.edit', function () {
+                        var data = table.row($(this).parents('tr')).data();
+                        $('#IsEdit').val('true');
+                        $('#Input_MasterKey_RowKey').val(data.RowKey);
+                        $('#Select_MasterValueInContext_PartitionKey').val(data.PartitionKey).formSelect();
+                        $('#Select_MasterValueInContext_PartitionKey').prop('disabled', true);
+                        $('#MasterValueInContext_Name').val(data.Name).addClass('valid');
+                        $('#MasterValueInContext_IsActive').prop('checked', data.IsActive);
+                        $('.btnSubmit').text('Save');
+                        M.updateTextFields();
+                    });
+
+                    $('.btnSubmit').click(function (e) {
+                        e.preventDefault();
+                        var form = $('#formMasterValue');
+                        if (!form.valid()) return;
+
+                        $.post(form.attr('action'), form.serialize(), function (res) {
+                            if (res === true) {
+                                M.toast({ html: 'Saved successfully!', classes: 'green' });
+                                table.ajax.reload();
+                                $('.reset').click();
+                            } else {
+                                M.toast({ html: 'Save failed!', classes: 'red' });
+                            }
+                        });
+                    });
+
+                    $('#frmUpload').submit(function (e) {
+                        e.preventDefault();
+                        var formData = new FormData(this);
+                        $.ajax({
+                            url: $(this).attr('action'),
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function () {
+                                M.toast({ html: 'Upload successful!', classes: 'green' });
+                                $('#modal1').modal('close');
+                                table.ajax.reload();
+                            },
+                            error: function () {
+                                M.toast({ html: 'Upload failed.', classes: 'red' });
+                            }
+                        });
+                    });
+                });
+            </script>
+        }

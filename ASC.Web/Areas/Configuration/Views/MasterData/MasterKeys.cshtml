@@ -1,0 +1,142 @@
+﻿@model ASC.Web.Areas.Configuration.Models.MasterKeysViewModel
+@{
+    Layout = "_SecureLayout";
+}
+
+
+<div class="row" , style="margin-top:30px">
+    <div class="col s12">
+        <div>
+            <div class="card-content">
+                <div class="section blue-grey lighten-1 white-text padding-left-10px">
+                    <h5>Master Keys</h5>
+                </div>
+                <div class="divider"></div>
+
+                @if (Model.MasterKeys != null && Model.MasterKeys.Any())
+                {
+                    <table id="tblMasterKeys" class="highlight striped centered responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Row Key</th>
+                                <th>Partition Key</th>
+                                <th>Name</th>
+                                <th>Is Active</th>
+                                <th>Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var key in Model.MasterKeys)
+                            {
+                                <tr>
+                                    <td>@key.RowKey</td>
+                                    <td>@key.PartitionKey</td>
+                                    <td>@key.Name</td>
+                                    <td>
+                                        <img src="@(key.IsActive ? "/images/green_tick.jpg" : "/images/red_cross.jpg")" alt="@(key.IsActive ? "Active" : "Inactive")" />
+                                    </td>
+                                    <td>
+                                        <i class="small material-icons edit cursor-hand">mode_edit</i>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="card blue-grey lighten-5">
+                        <div class="card-content">
+                            <span class="card-title grey-text text-darken-2">No Master Keys Found</span>
+                            <p class="grey-text text-darken-1">Please add a Master Key to the system.</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row z-depth-3 margin-top-20px">
+    <!-- Form Master Key Details -->
+    <div class="col s12">
+        <div class="section blue-grey lighten-1 white-text padding-left-10px">
+            <h5>Master Key Details</h5>
+        </div>
+        <div class="divider"></div>
+
+        <form asp-controller="MasterData" asp-action="MasterKeys" method="post" id="formMasterKey">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="IsEdit" id="IsEdit" />
+            <input type="hidden" asp-for="MasterKeyInContext.PartitionKey" id="MasterKeyInContext_PartitionKey" />
+
+            <div class="row">
+                <div class="input-field col s4">
+                    <input asp-for="MasterKeyInContext.RowKey" id="MasterKeyInContext_RowKey" disabled />
+                    <label for="MasterKeyInContext_RowKey">Row Key</label>
+                </div>
+                <div class="input-field col s4">
+                    <input asp-for="MasterKeyInContext.Name" id="MasterKeyInContext_Name" class="validate" />
+                    <label for="MasterKeyInContext_Name">Name</label>
+                </div>
+                <div class="input-field col s4">
+                    <div class="switch">
+                        <label>
+                            InActive
+                            <input asp-for="MasterKeyInContext.IsActive" id="MasterKeyInContext_IsActive" type="checkbox" />
+                            <span class="lever"></span>
+                            Active
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s12 right-align">
+                    <button type="submit" class="btn waves-effect waves-light btnSubmit">
+                        <span id="btnText">Create</span>
+                        <i class="material-icons right">send</i>
+                    </button>
+                    <button class="btn waves-effect waves-light reset red lighten-1" type="button">
+                        <i class="material-icons right">refresh</i>Reset
+                    </button>
+                </div>
+                <div class="col s12" asp-validation-summary="All"></div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+          var table = $('#tblMasterKeys').DataTable({
+            pageLength: 3,
+            lengthMenu: [[3,5,10,-1],[3,5,10,'All']]
+          });
+
+          $('#tblMasterKeys').css('width','100%');
+          $('select[name="tblMasterKeys_length"]').formSelect();
+
+          $('.reset').click(function(){
+            $('#formMasterKey')[0].reset();
+            $('#IsEdit').val('False');
+            $('#btnText').text('Create');
+            M.updateTextFields();
+          });
+
+          $('#tblMasterKeys tbody').on('click','.edit',function(){
+            var data = table.row($(this).parents('tr')).data();
+            // Populate form fields
+            $('#IsEdit').val('True');
+            $('#btnText').text('Save');
+            $('#MasterKeyInContext_RowKey').val(data[0]);
+            $('#MasterKeyInContext_PartitionKey').val(data[1]);
+            $('#originalPartitionKey').val(data[1]);
+            $('#MasterKeyInContext_Name').val(data[2]).addClass('valid');
+            var isActive = data[3] && data[3].toString().toLowerCase()==='true';
+            $('#MasterKeyInContext_IsActive').prop('checked',isActive);
+            M.updateTextFields();
+          });
+        });
+    </script>
+}

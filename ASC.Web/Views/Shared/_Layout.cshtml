@@ -1,0 +1,56 @@
+﻿@using Microsoft.Extensions.Options;
+@using ASC.Solution.Configuration;
+
+@{
+    Layout = "_MasterLayout";
+}
+<header>
+    <nav class="white" role="navigation">
+        <div class="nav-wrapper container">
+            <a id="logo-container" href="/Identity/Account/Login" class="brand-logo">
+                <img class="responsive-img" src="~/images/logo.png" alt="Logo" />
+            </a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="/Identity/Account/Login">Login 1</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <ul id="nav-mobile" class="sidenav">
+                <li><a href="/Identity/Account/Login">Login</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <a href="#" data-target="nav-mobile" class="sidenav-trigger">
+                <i class="material-icons">menu</i>
+            </a>
+        </div>
+    </nav>
+    <div id="index-banner" class="parallax-container">
+        <div class="section no-pad-bot">
+            <div class="container">
+                <br><br>
+                <h1 class="header center teal-text text-lighten-2">Automobile Service Center</h1>
+                <div class="row center">
+                    <h5 class="header col s12 light ">Where Quality meets Safety</h5>
+                </div>
+                <div class="row center">
+                    <a href="http://materializecss.com/getting-started.html" id="download-button" class="btn-large waves-effect waves-light teal lighten-1">
+                        Get Started
+                    </a>
+                </div>
+                <br><br>
+            </div>
+        </div>
+        <div class="parallax">
+            <img src="~/images/xe.jpg" alt="Unsplashed background 1">
+        </div>
+    </div>
+</header>
+<main>
+    <div class="row margin-bottom-8px">
+        <div class="col s12 padding-8px">
+            @RenderBody()
+        </div>
+    </div>
+</main>
+@section Scripts {
+    @RenderSection("Scripts", required: false)
+}

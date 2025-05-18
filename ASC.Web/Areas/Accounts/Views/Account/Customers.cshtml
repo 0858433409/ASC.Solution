@@ -1,0 +1,180 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@model ASC.Web.Areas.Accounts.Models.CustomerViewModel
+@inject UserManager<IdentityUser> userManager
+
+@{
+    Layout = "_SecureLayout";
+}
+
+<!-- CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<link href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" rel="stylesheet" />
+
+<style>
+    .cursor-hand {
+        cursor: pointer;
+    }
+
+    td img {
+        width: 24px;
+    }
+</style>
+
+<div style="width: 100%; padding-left: 10px; padding-right: 10px;">
+    <div class="row">
+
+        <!-- Users Table -->
+        <div class="row z-depth-3">
+            <div class="section white-text blue-grey lighten-1">
+                <h5 style="margin-left: 40px;">Users</h5>
+            </div>
+        </div>
+
+        <div class="col s12">
+            <div class="divider"></div>
+
+            @if (Model.Customers != null && Model.Customers.Any())
+            {
+                <table id="tblServiceEngineers" class="highlight centered">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Is Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Customers)
+                        {
+                            var identity = await userManager.GetClaimsAsync(user);
+                            var isActive = bool.TryParse(identity.SingleOrDefault(p => p.Type == "IsActive")?.Value, out var status) && status;
+
+                            <tr>
+                                <td>@user.Email</td>
+                                <td>
+                                    <img src="@(isActive ? "/images/green_tick.jpg" : "/images/red_cross.jpg")" />
+                                </td>
+                                <td>
+                                    <i class="small material-icons edit cursor-hand">mode_edit</i>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="card blue-grey lighten-1">
+                    <div class="card-content white-text">
+                        <span class="card-title">No Customers</span>
+                        <p>No customers found. Please add one to the system.</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Edit Form -->
+        <div class="row z-depth-3">
+            <div class="col s12">
+                <div class="section white-text blue-grey lighten-1">
+                    <h5 style="margin-left: 40px;">Edit Customer</h5>
+                </div>
+                <div class="divider"></div>
+
+                <div class="card">
+                    <form asp-action="Customers" method="post" id="formCustomer" class="col s12">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" asp-for="Registration.IsEdit" id="Registration_IsEdit" />
+                        <input type="hidden" asp-for="Registration.Email" id="Registration_Email" />
+
+                        <div class="row">
+                            <div class="input-field col s4">
+                                <input asp-for="Registration.Email" id="Input_Registration_Email" class="validate" />
+                                <label asp-for="Registration.Email"></label>
+                                <span asp-validation-for="Registration.Email" class="red-text"></span>
+                            </div>
+
+                            <div class="input-field col s4">
+                                <div class="switch" style="margin-top: 20px;">
+                                    <label>
+                                        Inactive
+                                        <input asp-for="Registration.IsActive" id="Registration_IsActive" type="checkbox" />
+                                        <span class="lever"></span>
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="input-field col s4 right-align">
+                                <button class="btn waves-effect waves-light btnSubmit" type="submit">
+                                    Save
+                                    <i class="material-icons right">send</i>
+                                </button>
+                                <button class="btn waves-effect waves-light red lighten-1 resetBtn" type="button" onclick="resetForm()">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div asp-validation-summary="All" class="col s12 red-text"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            const table = $('#tblServiceEngineers').DataTable({
+                pageLength: 3,
+                lengthMenu: [[3, 5, 10, -1], [3, 5, 10, "All"]]
+            });
+
+            M.updateTextFields();
+
+            // Edit customer
+            $(document).on('click', '.edit', function () {
+                var row = $(this).closest('tr');
+                var email = row.find('td').eq(0).text();
+                var imgSrc = row.find('td').eq(1).find('img').attr('src');
+                var isActive = imgSrc.includes('green_tick');
+
+                $('#Registration_IsEdit').val("True");
+                $('#Input_Registration_Email').val(email).prop('disabled', true);
+                $('#Registration_Email').val(email);
+                $('#Registration_IsActive').prop('checked', isActive);
+
+                M.updateTextFields();
+            });
+
+            // Reset
+            $('.resetBtn').click(function () {
+                resetForm();
+            });
+
+            // Trước khi submit
+            $('.btnSubmit').click(function () {
+                $('#Registration_Email').val($('#Input_Registration_Email').val());
+            });
+        });
+
+        function resetForm() {
+            $('#formCustomer')[0].reset();
+            $('#Registration_IsEdit').val("False");
+            $('#Input_Registration_Email').prop('disabled', false).val('');
+            $('#Registration_Email').val('');
+            $('#Registration_IsActive').prop('checked', false);
+            M.updateTextFields();
+        }
+    </script>
+}
